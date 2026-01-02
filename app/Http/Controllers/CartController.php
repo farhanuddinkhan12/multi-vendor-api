@@ -9,14 +9,28 @@ use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    public function index(){
-        $user = Auth::user()->id;
-        // return response()->json($user);
-        // $cartItem = $user->carts()->with('product')->get();
-        $cartItem = Cart::where('user_id', $user)->with('product')->get();
-        return response()->json($cartItem);
+    // public function index(){
+    //     $user = Auth::user()->id;
+    //     // return response()->json($user);
+    //     // $cartItem = $user->carts()->with('product')->get();
+    //     $cartItem = Cart::where('user_id', $user)->with('product')->get();
+    //     return response()->json($cartItem);
+    // }
+    public function index()
+    {
+        $cartItems = Cart::with('product')
+            ->where('user_id', Auth::id())
+            ->get();
+
+        return response()->json([
+            'cart' => $cartItems
+        ]);
     }
+
     public function store(Request $request){
+        if(!Auth::check()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
         $product = Product::findOrFail($request->product_id);
 
         $existingCartItem = Cart::where('user_id', Auth::id())
@@ -26,15 +40,19 @@ class CartController extends Controller
         if($existingCartItem){
             $existingCartItem->quantity += $request->quantity;
             $existingCartItem->save();
+            $cartItem = $existingCartItem;
         }else{
-            Cart::create([
+            $cartItem = Cart::create([
                 'user_id' => Auth::id(),
                 'product_id' => $product->id,
                 'quantity' => $request->quantity,
             ]);
         }
 
-        return response()->json(['message' => 'Product added to cart successfully']);
+        return response()->json([
+            'message' => 'Product added to cart successfully',
+            'cart' => $cartItem->load('product') //eager load product if needed
+        ]);
     }
     public function destroy($id){
         $cart = Cart::findOrFail($id);

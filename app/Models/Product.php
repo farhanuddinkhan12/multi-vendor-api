@@ -16,4 +16,10 @@ class Product extends Model
     {
         return $this->hasMany(Cart::class);
     }
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute()
+    {
+        return $this->image ? asset('storage/' . $this->image) : null;
+    }
 }

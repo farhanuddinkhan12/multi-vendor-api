@@ -10,31 +10,45 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public function index(){
-        if (Auth::user()->role ==='vendor') {
-            $products = Product::where('vendor_id', Auth::id())->get();
-        } else {
+    public function index()
+{
+    $user = Auth::user();
+
+    if ($user) {
+        if ($user->role === 'vendor') {
+            $products = Product::where('vendor_id', $user->id)->get();
+        } elseif ($user->role === 'admin') {
             $products = Product::all();
+        } else {
+            $products = Product::where('status', 'approved')->get();
         }
-        return response()->json($products);
+    } else {
+        // Guest user
+        $products = Product::where('status', 'approved')->get();
     }
 
-    public function store(Request $request){
+
+    return response()->json($products);
+}
+
+    public function store(Request $request)
+    {
         if (Auth::user()->role !== 'vendor') {
             return response()->json(['message' => 'Unauthorized: Only vendors can add products.'], 403);
         }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'price' => 'required|numeric|min:0',
             'stock' => 'required|integer|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'is_featured' => 'boolean',
         ]);
 
-        $imagePath = null;
-        if($request->hasFile('image')){
-            $imagePath = $request->file('image')->store('products', 'public');
-        }
+        $imagePath = $request->hasFile('image') 
+            ? $request->file('image')->store('products', 'public') 
+            : null;
 
         $product = Product::create([
             'vendor_id' => Auth::id(),
@@ -44,13 +58,36 @@ class ProductController extends Controller
             'stock' => $request->stock,
             'image' => $imagePath,
             'status' => 'pending',
+            'is_featured' => $request->input('is_featured', false),
         ]);
 
         return response()->json([
-            'message' => 'Product added successfully!', 
-            'product' => $product,
+            'message' => 'Product added successfully!',
+            'product' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'description' => $product->description,
+                'price' => $product->price,
+                'stock' => $product->stock,
+                'image_url' => $product->image ? asset('storage/' . $product->image) : null,
+                'status' => $product->status,
+                'is_featured' => $product->is_featured,
+            ],
         ], 201);
     }
+
+    public function featuredProducts()
+    {
+        $products = Product::where('is_featured', true)
+            ->with('vendor:id,name') // Eager load vendor
+            ->latest()
+            ->get();
+
+        return response()->json($products);
+    }
+
+
+
 
     public function update(Request $request, Product $product){
         if($product->vendor_id !== Auth::id()){
