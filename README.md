@@ -1,20 +1,14 @@
-# Multivendor E-commerce System
+# Multivendor E-commerce API (Laravel)
 
-This is a full-stack multivendor application built with Laravel (Backend API) and Vue.js (Frontend).
+This is the robust backend for a Multivendor platform, built with Laravel 10. It provides RESTful APIs for product management, vendor operations, and secure payments.
 
-## Features
-- Multi-auth System (Admin, Vendor, Customer)
-- Product CRUD with Image Upload
-- Order Management System
-- Eager Loading to optimize performance
+### Key Features:
+- **Role-Based Authentication:** Separate logic for Admins, Vendors, and Customers.
+- **Payment Gateway:** Integrated PayPal for secure transactions.
+- **Product Management:** Complete CRUD with category associations and featured status.
+- **Scalable Database:** Optimized migrations and relationships.
 
-## Tech Stack
-- **Backend:** Laravel 10
-- **Frontend:** Vue.js 3
-- **Database:** MySQL
-
-## Setup Instructions
-1. Clone the repo
-2. Run `composer install` in the backend folder
-3. Set up your `.env` file and run `php artisan migrate`
-4. Run `npm install` and `npm run dev` in the frontend folder
+### Tech Stack:
+- PHP / Laravel
+- MySQL
+- PayPal SDK
